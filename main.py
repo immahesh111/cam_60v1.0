@@ -73,7 +73,7 @@ elif app_mode == "Mobile Inspection":
                     unsafe_allow_html=True
                 )
                 st.success("Mobile Camera is: " + prediction)
-            elif prediction in ['Cam1_Scratch', 'Cam1_FingerPrint', 'Cam2_FingerPrint']:
+            elif prediction in ['Cam1_Scratch', 'Cam1_FingerPrint', 'Cam2_FingerPrint','Cam1_Crack']:
                 st.markdown(
                     """
                     <style>
