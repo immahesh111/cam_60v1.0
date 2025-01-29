@@ -90,20 +90,26 @@ elif app_mode == "Mobile Inspection":
                 st.warning("Prediction does not match expected categories.")
 
 
-elif app_mode == "Live Inspection":
+
+# Assuming model_prediction is defined elsewhere
+
+if app_mode == "Live Inspection":
     st.header('Live Mobile Screen Inspection')
     
-    # Start video capture using OpenCV
+    # Start video capture using Streamlit's camera input
     run = st.checkbox('Run')
     
     FRAME_WINDOW = st.image([])  # Create an empty image placeholder
-    
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # Open default camera
-    
-    while run:
-        ret, frame = cap.read()  # Read a frame from the camera
-        
-        if ret:
+
+    # Create a placeholder for the camera input
+    camera_input = st.camera_input("Take a picture")
+
+    if run:
+        if camera_input is not None:
+            # Convert the uploaded image to an OpenCV format
+            file_bytes = np.asarray(bytearray(camera_input.read()), dtype=np.uint8)
+            frame = cv2.imdecode(file_bytes, 1)
+
             # Make predictions on the current frame
             result_index = model_prediction(frame)
             
@@ -126,5 +132,5 @@ elif app_mode == "Live Inspection":
             
             # Display the resulting frame in Streamlit app
             FRAME_WINDOW.image(frame_rgb, channels='RGB')
-    
-    cap.release()  # Release the camera when done
+        else:
+            st.warning("Please enable your camera and take a picture.")
