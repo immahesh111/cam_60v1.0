@@ -54,14 +54,14 @@ elif app_mode == "Mobile Inspection":
             result_index = model_prediction(np.array(image))
             
             # Reading Labels
-            class_names = ['Cam1_Crack','Cam1_FingerPrint','Cam1_OK','Cam1_Scratch','Cam2_FingerPrint','Cam2_OK']
+            class_names = ['Cam1_Crack', 'Cam1_FingerPrint', 'Cam1_OK', 'Cam1_Scratch', 'Cam2_FingerPrint', 'Cam2_OK']
             prediction = class_names[result_index]
             
             # Display the prediction
             st.write("Prediction: " + prediction)
             
             # Change background color based on prediction
-            if prediction == 'Good':
+            if prediction in ['Cam1_OK', 'Cam2_OK']:
                 st.markdown(
                     """
                     <style>
@@ -73,7 +73,7 @@ elif app_mode == "Mobile Inspection":
                     unsafe_allow_html=True
                 )
                 st.success("Mobile Screen is: " + prediction)
-            elif prediction == 'NG (Scratch)':
+            elif prediction in ['Cam1_Scratch', 'Cam1_FingerPrint', 'Cam2_FingerPrint']:
                 st.markdown(
                     """
                     <style>
@@ -85,6 +85,10 @@ elif app_mode == "Mobile Inspection":
                     unsafe_allow_html=True
                 )
                 st.error("Mobile Screen is: " + prediction)
+            else:
+                # Optional: Handle other predictions if necessary
+                st.warning("Prediction does not match expected categories.")
+
 
 elif app_mode == "Live Inspection":
     st.header('Live Mobile Screen Inspection')
@@ -104,15 +108,16 @@ elif app_mode == "Live Inspection":
             result_index = model_prediction(frame)
             
             # Reading Labels
-            class_names = ['Cam1_Crack','Cam1_FingerPrint','Cam1_OK','Cam1_Scratch','Cam2_FingerPrint','Cam2_OK']
+            class_names = ['Cam1_Crack', 'Cam1_FingerPrint', 'Cam1_OK', 'Cam1_Scratch', 'Cam2_FingerPrint', 'Cam2_OK']
             prediction = class_names[result_index]
             
-            # Overlay prediction text on frame
-            if prediction == 'Good':
-                color = (0, 255, 0)  # Green for Good
+            # Determine color based on prediction
+            if prediction in ['Cam1_OK', 'Cam2_OK']:
+                color = (0, 255, 0)  # Green for OK
             else:
-                color = (0, 0, 255)  # Red for NG (Scratch)
-            
+                color = (0, 0, 255)  # Red for NG (Not Good)
+
+            # Overlay prediction text on frame
             cv2.putText(frame, f'Prediction: {prediction}', (10, 30), 
                         cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
             
