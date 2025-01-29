@@ -98,7 +98,7 @@ elif app_mode == "Live Inspection":
     
     FRAME_WINDOW = st.image([])  # Create an empty image placeholder
     
-    cap = cv2.VideoCapture(0)  # Open default camera
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # Open default camera
     
     while run:
         ret, frame = cap.read()  # Read a frame from the camera
