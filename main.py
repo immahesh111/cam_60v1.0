@@ -3,8 +3,6 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from PIL import Image
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
-import av
 
 # TensorFlow model prediction function
 def model_prediction(image):
