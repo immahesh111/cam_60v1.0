@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from PIL import Image
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import av
 
 # TensorFlow model prediction function
 def model_prediction(image):
@@ -93,45 +95,52 @@ elif app_mode == "Mobile Inspection":
 
 # Assuming model_prediction is defined elsewhere
 
+
+
+
+# Define your prediction model (assume model_prediction is defined elsewhere)
+class VideoProcessor(VideoTransformerBase):
+    def __init__(self) -> None:
+        self._run = True  # Control processing state
+
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        if not self._run:
+            return frame  # Bypass processing if not running
+
+        # Convert frame to OpenCV format (BGR)
+        img = frame.to_ndarray(format="bgr24")
+
+        # Perform prediction on the current frame
+        result_index = model_prediction(img)
+
+        # Define class labels
+        class_names = ['Cam1_Crack', 'Cam1_FingerPrint', 'Cam1_OK', 
+                       'Cam1_Scratch', 'Cam2_FingerPrint', 'Cam2_OK']
+        prediction = class_names[result_index]
+
+        # Set text color based on prediction
+        color = (0, 255, 0) if prediction in ['Cam1_OK', 'Cam2_OK'] else (0, 0, 255)
+
+        # Overlay prediction text on the frame
+        cv2.putText(img, f'Prediction: {prediction}', (10, 30), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+
+        # Return the annotated frame
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
+
 if app_mode == "Live Inspection":
     st.header('Live Mobile Screen Inspection')
     
-    run = st.checkbox('Run')
+    # Start/Stop toggle for live processing
+    run = st.checkbox('Run', value=True)
     
-    FRAME_WINDOW = st.image([])  # Placeholder for displaying frames
+    # Initialize the video streamer with the custom processor
+    ctx = webrtc_streamer(
+        key="live-inspection",
+        video_processor_factory=VideoProcessor,
+        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    )
     
-    # Assign a key to the camera input to manage its session state
-    camera_input = st.camera_input("Take a picture", key='camera_input')
-
-    if run:
-        if camera_input is not None:
-            # Convert image data to OpenCV format
-            file_bytes = np.asarray(bytearray(camera_input.read()), dtype=np.uint8)
-            frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-            
-            # Perform prediction
-            result_index = model_prediction(frame)
-            
-            class_names = ['Cam1_Crack', 'Cam1_FingerPrint', 'Cam1_OK', 'Cam1_Scratch', 'Cam2_FingerPrint', 'Cam2_OK']
-            prediction = class_names[result_index]
-            
-            # Determine text color based on prediction
-            color = (0, 255, 0) if prediction in ['Cam1_OK', 'Cam2_OK'] else (0, 0, 255)
-            
-            # Annotate the frame with prediction
-            cv2.putText(frame, f'Prediction: {prediction}', (10, 30), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-            
-            # Convert frame to RGB for display in Streamlit
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            FRAME_WINDOW.image(frame_rgb, channels='RGB')
-            
-            # Clear the camera input from session state to reset it
-            if 'camera_input' in st.session_state:
-                del st.session_state.camera_input
-            
-            # Clear all cached data and resources to ensure fresh predictions
-            st.cache_data.clear()
-            st.cache_resource.clear()
-        else:
-            st.warning("Please enable your camera and take a picture.")
+    # Control the processing state based on the checkbox
+    if ctx.video_processor:
+        ctx.video_processor._run = run
