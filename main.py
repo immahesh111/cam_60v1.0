@@ -96,41 +96,42 @@ elif app_mode == "Mobile Inspection":
 if app_mode == "Live Inspection":
     st.header('Live Mobile Screen Inspection')
     
-    # Start video capture using Streamlit's camera input
     run = st.checkbox('Run')
     
-    FRAME_WINDOW = st.image([])  # Create an empty image placeholder
-
-    # Create a placeholder for the camera input
-    camera_input = st.camera_input("Take a picture")
+    FRAME_WINDOW = st.image([])  # Placeholder for displaying frames
+    
+    # Assign a key to the camera input to manage its session state
+    camera_input = st.camera_input("Take a picture", key='camera_input')
 
     if run:
         if camera_input is not None:
-            # Convert the uploaded image to an OpenCV format
+            # Convert image data to OpenCV format
             file_bytes = np.asarray(bytearray(camera_input.read()), dtype=np.uint8)
-            frame = cv2.imdecode(file_bytes, 1)
-
-            # Make predictions on the current frame
+            frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+            
+            # Perform prediction
             result_index = model_prediction(frame)
             
-            # Reading Labels
             class_names = ['Cam1_Crack', 'Cam1_FingerPrint', 'Cam1_OK', 'Cam1_Scratch', 'Cam2_FingerPrint', 'Cam2_OK']
             prediction = class_names[result_index]
             
-            # Determine color based on prediction
-            if prediction in ['Cam1_OK', 'Cam2_OK']:
-                color = (0, 255, 0)  # Green for OK
-            else:
-                color = (0, 0, 255)  # Red for NG (Not Good)
-
-            # Overlay prediction text on frame
+            # Determine text color based on prediction
+            color = (0, 255, 0) if prediction in ['Cam1_OK', 'Cam2_OK'] else (0, 0, 255)
+            
+            # Annotate the frame with prediction
             cv2.putText(frame, f'Prediction: {prediction}', (10, 30), 
                         cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
             
-            # Convert BGR image (OpenCV format) to RGB format (Streamlit format)
+            # Convert frame to RGB for display in Streamlit
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            
-            # Display the resulting frame in Streamlit app
             FRAME_WINDOW.image(frame_rgb, channels='RGB')
+            
+            # Clear the camera input from session state to reset it
+            if 'camera_input' in st.session_state:
+                del st.session_state.camera_input
+            
+            # Clear all cached data and resources to ensure fresh predictions
+            st.cache_data.clear()
+            st.cache_resource.clear()
         else:
             st.warning("Please enable your camera and take a picture.")
