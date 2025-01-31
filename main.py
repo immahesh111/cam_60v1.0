@@ -3,6 +3,8 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from PIL import Image
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import av
 
 # TensorFlow model prediction function
 def model_prediction(image):
@@ -92,10 +94,7 @@ elif app_mode == "Mobile Inspection":
 
 
 # Assuming model_prediction is defined elsewhere
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
-import cv2
-import numpy as np
-import av
+
 
 # Define your prediction model (assume model_prediction is defined elsewhere)
 class VideoProcessor(VideoTransformerBase):
